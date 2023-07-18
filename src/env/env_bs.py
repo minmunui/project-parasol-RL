@@ -3,7 +3,7 @@ from typing import Optional, Union, List, Tuple
 
 import gym
 import numpy as np
-from gym.core import RenderFrame, ActType, ObsType
+from gym.core import ActType, ObsType
 
 DEFAULT_OPTION = {
     'initial_balance_coef': 10,  # 초기 자본금 계수, 초기 자본금 = 최대종가 * 비율정밀도 * 계수, 1일 때, 최대가격을 기준으로 모든 비율의 주식을 구매할 수 있도록 함
@@ -51,7 +51,6 @@ class MyEnv(gym.Env):
         # Agent가 획득하는 데이터의 형태 (감시할 기간, 감시할 데이터의 수)
         self.shape = (option['window_size'], self.number_of_properties)
 
-
         # 수수료와 세금 세금은 매도할 때만 발생
         self.selling_tax = self.option['selling_tax']
         self.commission = self.option['commission']
@@ -60,7 +59,8 @@ class MyEnv(gym.Env):
         self.reward_threshold = self.option['reward_threshold']
 
         # 초기 자본금 = 최대종가 * 비율정밀도 * 계수 (1일 때, 최대가격을 기준으로 모든 비율의 주식을 구매할 수 있도록 함)
-        self.init_balance = self.option['initial_balance_coef'] * df['Close'].max() * self.option['proportion_precision']
+        self.init_balance = self.option['initial_balance_coef'] * df['Close'].max() * self.option[
+            'proportion_precision']
 
         # 시작과 끝 그리고 현재 index
         self.start_index = self.option['start_index'] + self.window_size - 1
@@ -81,7 +81,7 @@ class MyEnv(gym.Env):
         self._reward_huddle = None
 
         # 현재 상태와 가격, 주가데이터
-        self._state = None
+        self._state = {}
         self.price = df['Close'].values
         self._stock_data = None
 
@@ -118,7 +118,6 @@ class MyEnv(gym.Env):
 
     def reset(self) -> ObsType:
         # 초기화
-
         self._holdings = 0
         self._avg_buy_price = 0
         self._current_proportion = 0
@@ -129,6 +128,7 @@ class MyEnv(gym.Env):
         self._reward_huddle = self.init_balance
         self._history = []
         self._done = False
+        self._state = {}
         # 초기 상태 반환
         return self._observe()
 
@@ -139,8 +139,7 @@ class MyEnv(gym.Env):
             return self._state
 
         # 각 종목의 데이터를 가져와서 stock_info, self.prices에 추가
-        self._stock_data = self.df[(self._current_index - self.window_size + 1):self._current_index + 1]
-
+        self._stock_data = self.df[(self._current_index - self.window_size + 1):self._current_index + 1].values
         # 각종 정보를 state에 추가
         self._state['stock_data'] = self._stock_data
         self._state['holding'] = self._holdings
@@ -152,15 +151,14 @@ class MyEnv(gym.Env):
         if self._done:
             raise Exception("Episode is done")
 
-        # action이 act type에 맞는지 확인
-        assert self.action_space.contains(action), f"Invalid Action {action} is not in {self.action_space}"
-
+        print('action = {0}'.format({action}))
         # 매수
         if action == 0:
             if not (self._current_proportion == self.proportion_precision):
                 # 매수량 결정하기
                 self._current_proportion += 1
                 amount = int(self._get_hold_amount() - self._holdings)
+                print('amount_to_buy : {0}'.format(amount))
                 self._buy(amount)
 
         # 매도
@@ -170,6 +168,7 @@ class MyEnv(gym.Env):
                 self._current_proportion -= 1
                 amount = int(self._holdings - self._get_hold_amount())
                 self._sell(amount)
+
 
         # action 후 기록
         info = dict(
@@ -182,6 +181,9 @@ class MyEnv(gym.Env):
 
         # 다음 index로 넘어가기
         self._current_index += 1
+
+        self._get_total_value()
+        self._get_profit()
         self._observe()
         reward = self._get_reward()
 
@@ -193,7 +195,9 @@ class MyEnv(gym.Env):
 
     def _get_hold_amount(self) -> int:
         # 최대 보유 가능 주식 수 계산
-        return int(self._balance / (self.price[self._current_index] * (1.0 + self.commission)))
+        return int(self._total_value * self._current_proportion /
+                   self.proportion_precision /
+                   (self.price[self._current_index] * (1.0 + self.commission)))
 
     def _buy(self, amount: int) -> None:
         # 매수할 주식의 가격과 수수료 계산 후 잔고에서 차감 후 보유량 증가 평균 매수가 계산
@@ -201,7 +205,10 @@ class MyEnv(gym.Env):
         commission = price * amount * self.commission
         self._balance -= price * amount + commission
         self._holdings += amount
-        self._avg_buy_price = (self._avg_buy_price * (self._holdings - amount) + price * amount) / self._holdings
+        if self._holdings > 0:
+            self._avg_buy_price = (self._avg_buy_price * (self._holdings - amount) + price * amount) / self._holdings
+        else:
+            self._avg_buy_price = self.price[self._current_index]
 
     def _sell(self, amount: int) -> None:
         # 매도할 주식의 가격과 수수료,세금 계산 후 잔고에 반영, 보유량 감소
@@ -234,3 +241,12 @@ class MyEnv(gym.Env):
     def _get_done(self) -> bool:
         self._done = self._current_index >= self.end_index
         return self._done
+
+    def print_current_state(self):
+        print("current_index : {}".format(self._current_index))
+        print("price_last : {}".format(self.price[self._current_index - 1]))
+        print("price_current : {}".format(self.price[self._current_index]))
+        print("holdings : {}".format(self._holdings))
+        print("balance: {}".format(self._balance))
+        print("total_value : {}".format(self._total_value))
+        print("current_holding_proportion : {}".format(self._current_proportion))
