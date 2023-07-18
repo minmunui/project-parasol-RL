@@ -101,7 +101,7 @@ class MyEnv(gym.Env):
             # 평균 매수가 : 최대 가격을 넘을 수 없음
             "avg_buy_price": gym.spaces.Box(
                 low=0,
-                high=df['Close'].max(),
+                high=np.inf,
                 dtype=np.float32
             ),
 
@@ -143,7 +143,7 @@ class MyEnv(gym.Env):
         self._stock_data = self.df[(self._current_index - self.window_size + 1):self._current_index + 1].values
         # 각종 정보를 state에 추가
         self._state['stock_data'] = self._stock_data
-        self._state['holding'] = self._holdings
+        self._state['holding'] = self._current_proportion
         self._state['avg_buy_price'] = self._avg_buy_price
         return self._state
 
