@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional, Union, List, Tuple
+from typing import Tuple
 
 import gym
 import numpy as np
@@ -13,7 +13,7 @@ DEFAULT_OPTION = {
     'proportion_precision': 4,  # 비율 정밀도 (결정할 수 있는 비율의 수) 20이면 0.05 단위로 결정
     'commission': .0003,  # 수수료
     'selling_tax': .00015,  # 매도세
-    'reward_threshold': 0.02,  # 보상 임계값 : 수익률이 이 값을 넘으면 보상을 1로 설정
+    'reward_threshold': 0.03,  # 보상 임계값 : 수익률이 이 값을 넘으면 보상을 1로 설정
 }
 
 
@@ -82,7 +82,7 @@ class MyEnv(gym.Env):
 
         # 현재 상태와 가격, 주가데이터
         self._state = {}
-        self.price = df['Close'].values
+        self.price = df['Close'].values.astype(np.float32)
         self._stock_data = None
 
         # action을 저장할 변수
@@ -121,6 +121,7 @@ class MyEnv(gym.Env):
         self._holdings = 0
         self._avg_buy_price = 0
         self._current_proportion = 0
+        self._current_proportion = np.clip(self._current_proportion, 0, self.proportion_precision)
         self._profit = 1.0
         self._total_value = self.init_balance
         self._balance = self.init_balance
@@ -151,14 +152,14 @@ class MyEnv(gym.Env):
         if self._done:
             raise Exception("Episode is done")
 
-        print('action = {0}'.format({action}))
+        # print('action = {0}'.format({action}))
         # 매수
         if action == 0:
             if not (self._current_proportion == self.proportion_precision):
                 # 매수량 결정하기
                 self._current_proportion += 1
                 amount = int(self._get_hold_amount() - self._holdings)
-                print('amount_to_buy : {0}'.format(amount))
+                # print('amount_to_buy : {0}'.format(amount))
                 self._buy(amount)
 
         # 매도
@@ -226,12 +227,14 @@ class MyEnv(gym.Env):
         if self._total_value > positive_threshold or self._total_value < negative_threshold:
             reward = (self._total_value - self._reward_huddle) / reward_coefficient
             self._reward_huddle = self._total_value
+            # print("reward : ", reward)
+            # print("reward_huddle", self._reward_huddle)
             return reward
         else:
             return 0
 
     def _get_profit(self) -> float:
-        self._profit = (self._total_value - self.init_balance) / self.init_balance
+        self._profit = (self._total_value - self.init_balance) / self.init_balance + 1.0
         return self._profit
 
     def _get_total_value(self) -> float:
@@ -244,9 +247,10 @@ class MyEnv(gym.Env):
 
     def print_current_state(self):
         print("current_index : {}".format(self._current_index))
-        print("price_last : {}".format(self.price[self._current_index - 1]))
+        print("price_last : {}".format(self.price[self._current_index-1]))
         print("price_current : {}".format(self.price[self._current_index]))
         print("holdings : {}".format(self._holdings))
         print("balance: {}".format(self._balance))
         print("total_value : {}".format(self._total_value))
+        print("total_profit : {}".format(self._profit))
         print("current_holding_proportion : {}".format(self._current_proportion))
