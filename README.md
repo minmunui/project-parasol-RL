@@ -23,13 +23,15 @@ Conda : 23.3.1
 
 ```
 project-parasol
-├── README.md
-├── requirements.txt
-├── .gitignore
 ├── src
 │   ├── env
 ├── data
 ```
+`src` : 강화학습에 필요한 소스코드들이 존재합니다.
+
+`src/env` : 환경과 관련된 소스코드들이 존재합니다.
+
+`data` : 학습에 필요한 데이터가 존재합니다.
 
 ## 프로젝트 설치
 
@@ -38,21 +40,17 @@ project-parasol
 git clone <레포지토리 주소>
 ```
 
-Conda를 이용하여 가상환경을 만듭니다. conda 버전은 23.3.1을 사용하였습니다.
+Conda를 이용하여 가상환경을 만듭니다. `project-parasol.yaml`을 이용하여, 필요한 라이브러리를 설치합니다.
 ```
-conda create -n <가상환경 이름> python=3.10
+conda env create -f project-parasol.yaml
 ```
 
-가상환경을 활성화합니다.
+가상환경을 활성화합니다. 위의 `yaml` 파일에서 `name`에 해당하는 이름을 입력합니다. 
+
+기본은 project-parasol입니다.
 ```
 conda activate <가상환경 이름>
 ```
-
-필요한 라이브러리를 설치합니다.
-```
-pip install -r requirements.txt
-```
-
 [//]: # (## 프로젝트 실행)
 
 [//]: # ()
