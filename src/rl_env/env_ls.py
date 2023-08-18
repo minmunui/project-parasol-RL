@@ -16,7 +16,6 @@ SHORT = 0
 LONG = 1
 
 
-
 class MyEnv(gym.Env):
     metadata = {"render_modes": ["human"]}
 
@@ -141,7 +140,8 @@ class MyEnv(gym.Env):
 
     def _get_reward(self, action: ActType) -> float:
         if self._total_value > self._positive_reward_huddle or self._total_value < self._negative_reward_huddle:
-            reward = (self._total_value - (self._positive_reward_huddle + self._negative_reward_huddle)/2.0) / self.reward_threshold
+            reward = (self._total_value - (
+                        self._positive_reward_huddle + self._negative_reward_huddle) / 2.0) / self.reward_threshold
             self._positive_reward_huddle = self._total_value * (1.0 + self.reward_threshold)
             self._negative_reward_huddle = self._total_value * (1.0 - self.reward_threshold)
             return reward
@@ -151,7 +151,7 @@ class MyEnv(gym.Env):
     def _update_profit(self, action: ActType):
         if action != self._current_action:  # 예측이 변경되었다면
             self._total_value = self._total_value * (1.0 - self.commission)
-        if action == LONG: # Long일 경우 수익률을 곱함
+        if action == LONG:  # Long일 경우 수익률을 곱함
             self._total_value *= self.price[self._current_index] / self.price[self._current_index - 1]
 
     def _update_history(self, info):
