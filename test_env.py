@@ -1,4 +1,4 @@
-import src.rl_env.env_ls_with_short_reward as env
+import src.rl_env.env_ls_vp_with_short_reward as env
 import src.utils.utils as utils
 
 urls = './data/STOCKS_GOOGL.csv'
