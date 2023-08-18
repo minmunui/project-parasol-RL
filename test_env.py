@@ -1,4 +1,4 @@
-import src.env.env_ls as env
+import src.rl_env.env_ls_with_short_reward as env
 import src.utils.utils as utils
 
 urls = './data/STOCKS_GOOGL.csv'
@@ -8,7 +8,7 @@ stock_info = utils.load_data(urls)
 env = env.MyEnv(stock_info)
 
 default_option = {
-    'window_size': 10,
+    'window_size': 20,
     'start_index': 0,
     'end_index': 100,
     'commission': 0.01,
