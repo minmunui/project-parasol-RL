@@ -8,8 +8,9 @@ DEFAULT_OPTION = {
     'start_index': 0,  # 학습 시작 인덱스
     'end_index': 30,  # 학습 종료 인덱스
     'window_size': 20,  # 학습에 사용할 데이터 수, 최근 수치에 따라 얼마나 많은 데이터를 사용할지 결정
-    'commission': .0003,  # 수수료
+    'commission': 0,  # 수수료
     'reward_threshold': 0.03,  # 보상 임계값 : 수익률이 이 값을 넘으면 보상을 1로 설정
+    'hold_penalty': -0.05
 }
 
 SHORT = 0
@@ -53,8 +54,15 @@ class MyEnv(gym.Env):
 
         # 수수료와 세금, 세금은 매도할 때만 발생
         self.commission = self.option['commission']
+
+        # 참고할 과거의 수
         self.window_size = self.option['window_size']
+
+        # 보상 임계치 해당 임계치를 넘으면 보상이 1을 기준으로 발생
         self.reward_threshold = self.option['reward_threshold']
+
+        # 관망에 대한 패널티
+        self.hold_penalty = self.option['hold_penalty']
 
         # 시작과 끝 그리고 현재 index
         self.start_index = self.option['start_index'] + self.window_size - 1
@@ -109,7 +117,7 @@ class MyEnv(gym.Env):
         self._total_reward = 0.0
         self._reward_standard = 1.0
         self._done = False
-        self._current_action = SHORT
+        self._current_action = HOLD
         self._history = []
         self._positive_reward_huddle = (1.0 + self.reward_threshold)
         self._negative_reward_huddle = (1.0 - self.reward_threshold)
@@ -160,18 +168,18 @@ class MyEnv(gym.Env):
         return self.df[(self._current_index - self.window_size + 1):self._current_index + 1].values
 
     def _get_reward(self, action: ActType) -> float:
+        if action == HOLD:
+            return self.hold_penalty
         if self._reward_standard > self._positive_reward_huddle or self._reward_standard < self._negative_reward_huddle:
             reward = (self._reward_standard - (
-                        self._positive_reward_huddle + self._negative_reward_huddle) / 2.0) / self.reward_threshold
+                    self._positive_reward_huddle + self._negative_reward_huddle) / 2.0) / self.reward_threshold
             self._positive_reward_huddle = self._reward_standard * (1.0 + self.reward_threshold)
             self._negative_reward_huddle = self._reward_standard * (1.0 - self.reward_threshold)
             return reward
-        else:
-            return -0.03
 
     def _update_profit(self, action: ActType):
         self._virtual_value *= (self._get_change_ratio() - 1.0) * (
-                    self._holding_ratio / self._proportion_precision) + 1.0
+                self._holding_ratio / self._proportion_precision) + 1.0
         if action != self._current_action:  # 예측이 변경되었다면
             self._total_value = self._total_value * (1.0 - self.commission)
             self._reward_standard = self._reward_standard * (1.0 - self.commission)
