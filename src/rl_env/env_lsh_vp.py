@@ -176,6 +176,8 @@ class MyEnv(gym.Env):
             self._positive_reward_huddle = self._reward_standard * (1.0 + self.reward_threshold)
             self._negative_reward_huddle = self._reward_standard * (1.0 - self.reward_threshold)
             return reward
+        else:
+            return 0
 
     def _update_profit(self, action: ActType):
         self._virtual_value *= (self._get_change_ratio() - 1.0) * (
