@@ -10,7 +10,7 @@ DEFAULT_OPTION = {
     'window_size': 20,  # 학습에 사용할 데이터 수, 최근 수치에 따라 얼마나 많은 데이터를 사용할지 결정
     'commission': 0,  # 수수료
     'reward_threshold': 0.03,  # 보상 임계값 : 수익률이 이 값을 넘으면 보상을 1로 설정
-    'hold_penalty': -0.05
+    'hold_penalty': -0.05 # 관망 패널티 : 관망할 경우 보상하는 패널티
 }
 
 SHORT = 0
