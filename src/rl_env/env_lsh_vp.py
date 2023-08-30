@@ -10,7 +10,7 @@ DEFAULT_OPTION = {
     'window_size': 20,  # 학습에 사용할 데이터 수, 최근 수치에 따라 얼마나 많은 데이터를 사용할지 결정
     'commission': 0,  # 수수료
     'reward_threshold': 0.03,  # 보상 임계값 : 수익률이 이 값을 넘으면 보상을 1로 설정
-    'hold_penalty': -0.05 # 관망 패널티 : 관망할 경우 보상하는 패널티
+    'hold_penalty': -0.05  # 관망 패널티 : 관망할 경우 보상하는 패널티
 }
 
 SHORT = 0
@@ -171,10 +171,14 @@ class MyEnv(gym.Env):
         if action == HOLD:
             return self.hold_penalty
         if self._reward_standard > self._positive_reward_huddle or self._reward_standard < self._negative_reward_huddle:
+            print(f'reward_standard: {self._reward_standard}, positive_reward_huddle: {self._positive_reward_huddle}, ')
+            print(f'negative_reward_huddle: {self._negative_reward_huddle}')
             reward = (self._reward_standard - (
-                    self._positive_reward_huddle + self._negative_reward_huddle) / 2.0) / self.reward_threshold
+                    self._positive_reward_huddle + self._negative_reward_huddle) / 2.0) / (self.reward_threshold * (
+                    self._positive_reward_huddle + self._negative_reward_huddle) / 2.0)
             self._positive_reward_huddle = self._reward_standard * (1.0 + self.reward_threshold)
             self._negative_reward_huddle = self._reward_standard * (1.0 - self.reward_threshold)
+            print(f'reward: {reward}')
             return reward
         else:
             return 0
