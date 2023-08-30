@@ -1,4 +1,4 @@
-import src.rl_env.env_ls_vp_with_short_reward as env
+import src.rl_env.env_lsh_vp as env
 import src.utils.utils as utils
 
 urls = './data/STOCKS_GOOGL.csv'
@@ -11,8 +11,8 @@ default_option = {
     'window_size': 20,
     'start_index': 0,
     'end_index': 100,
-    'commission': 0.01,
-    'selling_tax': 0.01,
+    'commission': 0.00,
+    'selling_tax': 0.00,
 }
 
 
