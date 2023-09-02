@@ -58,6 +58,9 @@ conda env create -f project-parasol.yaml
 ```
 conda activate <가상환경 이름>
 ```
+`main.ipynb`를 실행하여 잘 설치되었는지 확인합니다.
+
+
 [//]: # (## 프로젝트 실행)
 
 [//]: # ()
