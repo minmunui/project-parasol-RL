@@ -13,8 +13,8 @@ def addMovingAverageRateColumn(df, windowSize, sourceColumn, targetColumn):
 def addQuantyColumns(df, windowSizes, tradingColumn, closeColumn):
     addScalingRateColumn(df, tradingColumn, "전일대비거래량비율")
     for windowSize in windowSizes:
-        addMovingAverageRateColumn(df, windowSize, tradingColumn, str(windowSize) + "일평균거래량비율")
-        addMovingAverageRateColumn(df, windowSize, closeColumn, str(windowSize) + "일평균종가비율")
+        addMovingAverageRateColumn(df, windowSize, tradingColumn, str(windowSize) + "일평균거래량대비거래량비율")
+        addMovingAverageRateColumn(df, windowSize, closeColumn, str(windowSize) + "일평균종가대비종가비율")
 
     return df
 
